@@ -129,3 +129,7 @@ lol0cs init
 
 MIT — free to use, modify, and distribute.  
 Use responsibly and legally.
+
+
+## Credits
+Developed by **LOUAA AL MITHEAB** as a study on self-healing software and network reconnaissance.
