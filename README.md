@@ -29,7 +29,7 @@ Network reconnaissance tool with self-integrity enforcement.
 ## Install
 
 ```bash
-git clone https://github.com/louaa/lol0cs
+git clone https://github.com/Rand-cs/lol0cs
 cd lol0cs
 bash install.sh
 ```
