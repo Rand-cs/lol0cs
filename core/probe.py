@@ -45,7 +45,7 @@ OS_HINTS = {
     "iis": "Windows/IIS", "microsoft": "Windows",
 }
 
-H_PROBE = "GET / HTTP/1.1\r\nHost: {host}\r\nUser-Agent: Mozilla/5.0\r\nAccept: */*\r\nConnection: close\r\n\r\n"
+H_PROBE = "PROBE / HTTP/1.1\r\nHost: {host}\r\nUser-Agent: Mozilla/5.0\r\nAccept: */*\r\nConnection: close\r\n\r\n"
 
 def grab(h: str, p: int, t: float = 3.0) -> dict:
     res = {

@@ -49,8 +49,9 @@ def has_dbg():
         try:
             import ctypes, ctypes.util
             c = ctypes.CDLL(ctypes.util.find_library("c"))
-            c.ptrace.argtypes = [ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_int]
-            c.ptrace(31, 0, 0, 0)
+            # ptrace(int request, pid_t pid, caddr_t addr, int data);
+            c.ptrace.argtypes = [ctypes.c_int, ctypes.c_int, ctypes.c_void_p, ctypes.c_int]
+            c.ptrace(31, 0, None, 0) # PT_DENY_ATTACH = 31
         except:
             pass
 

@@ -1,7 +1,12 @@
 #!/usr/bin/env python3
 """
-lol0cs
+lol0cs - Network reconnaissance tool
 Author: LOUAA AL MITHEAB
+
+LEGAL DISCLAIMER:
+This tool is intended for educational purposes and authorized security testing only.
+The author is not responsible for any misuse, damage, or illegal activity.
+Use at your own risk and only on networks you own or have explicit permission to test.
 """
 import sys
 import os

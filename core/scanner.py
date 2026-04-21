@@ -51,17 +51,29 @@ class Throttle:
     def __init__(self, p: str):
         self.p = p
         self.history = []
+        self.rtts = []
+        self.base_rtt = None
         self.m = 1.0
 
-    def ack(self, ok: bool):
+    def ack(self, ok: bool, rtt_ms: float = 0.0):
         self.history.append(ok)
         if len(self.history) > 40: self.history.pop(0)
+        
+        if ok and rtt_ms > 0:
+            if self.base_rtt is None or rtt_ms < self.base_rtt:
+                self.base_rtt = rtt_ms
+            self.rtts.append(rtt_ms)
+            if len(self.rtts) > 10: self.rtts.pop(0)
+
         drops = self.history.count(False) / max(1, len(self.history))
-        # back off if getting dropped too much
-        if drops > 0.55:
-            self.m = min(4.0, self.m * 1.25)
-        elif drops < 0.15:
-            self.m = max(1.0, self.m * 0.92)
+        avg_rtt = sum(self.rtts) / len(self.rtts) if self.rtts else 0
+        
+        jitter_spike = self.base_rtt and avg_rtt > (self.base_rtt * 1.5)
+        
+        if drops > 0.40 or jitter_spike:
+            self.m = min(5.0, self.m * 1.5)
+        elif drops < 0.10 and not jitter_spike:
+            self.m = max(0.8, self.m * 0.90)
 
     def wait_time(self) -> float:
         return get_delay(self.p) * self.m
@@ -162,9 +174,30 @@ def run_scan(ip: str, ports: List[int], prof: str = "normal", t: float = 2.0, ba
     found = {}
     lk = threading.Lock()
 
+    # true concurrency cap per profile — ghost is genuinely serial
+    _slots = {"ghost": 1, "cautious": 3, "normal": 15, "aggressive": w}
+    sem = threading.Semaphore(_slots.get(prof, 15))
+
+    # running RTT samples for adaptive delay (last 20 responses)
+    _rtts: List[float] = []
+    _rtt_lk = threading.Lock()
+
+    def _adaptive_delay() -> float:
+        with _rtt_lk:
+            if len(_rtts) >= 3:
+                avg = sum(_rtts[-20:]) / len(_rtts[-20:])
+                # wait at least 2x avg RTT so next probe lands after previous response
+                return max(get_delay(prof), avg * 2.0)
+        return get_delay(prof)
+
     def worker(p):
-        time.sleep(thrt.wait_time())
-        return scan_p(ip, p, t)
+        with sem:
+            time.sleep(_adaptive_delay())
+            pr = scan_p(ip, p, t)
+            with _rtt_lk:
+                _rtts.append(pr["latency_ms"] / 1000.0)
+                if len(_rtts) > 50: _rtts.pop(0)
+            return pr
 
     def do_work():
         with ThreadPoolExecutor(max_workers=w) as ex:
@@ -173,14 +206,15 @@ def run_scan(ip: str, ports: List[int], prof: str = "normal", t: float = 2.0, ba
             for f in as_completed(f_map):
                 try:
                     pr = f.result()
-                    thrt.ack(pr["state"] != "filtered")
+                    thrt.ack(pr["state"] != "filtered", pr.get("latency_ms", 0.0))
                     if pr["state"] == "open" and banner:
                         inf = grab(ip, pr["port"], t + 1.0)
                         pr.update({"service": inf.get("service", "unknown"), "version": inf.get("version"), "os_hint": inf.get("os_hint")})
                         ver_str = f"  {pr['version']}" if pr.get("version") else ""
                         log_cb(f"  {pr['port']:>5}/tcp  open  {pr['service']}{ver_str}")
                     with lk: found[pr["port"]] = pr
-                except Exception: pass
+                except Exception as e:
+                    log_cb(f"  [!] Error on worker: {e}")
 
     do_work()
     res.ports = sorted(found.values(), key=lambda x: x["port"])

@@ -3,7 +3,13 @@
 Network reconnaissance tool with self-integrity enforcement.  
 **Author: LOUAA AL MITHEAB**
 
-> For authorized use only — on networks you own or have written permission to test.
+## ⚠️ Legal Disclaimer and Terms of Use
+
+> **IMPORTANT:** This tool is provided for **educational purposes, academic research, and authorized security testing ONLY.** 
+>
+> 1. **Authorization:** You must have explicit, written permission from the network owner before scanning or probing any target.
+> 2. **Liability:** The author (LOUAA AL MITHEAB) is NOT responsible for any misuse, damage, or illegal activities caused by this tool. By downloading and using this software, you assume all liability and responsibility.
+> 3. **Compliance:** Users are required to comply with all applicable local, state, and federal laws regarding network security and privacy. Unauthorized network scanning can be a criminal offense.
 
 ---
 
