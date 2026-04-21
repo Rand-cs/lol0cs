@@ -162,13 +162,13 @@ def run_scan(ip: str, ports: List[int], prof: str = "normal", t: float = 2.0, ba
     found = {}
     lk = threading.Lock()
 
+    def worker(p):
+        time.sleep(thrt.wait_time())
+        return scan_p(ip, p, t)
+
     def do_work():
         with ThreadPoolExecutor(max_workers=w) as ex:
-            f_map = {}
-            for p in ord_ports:
-                time.sleep(thrt.wait_time())
-                f = ex.submit(scan_p, ip, p, t)
-                f_map[f] = p
+            f_map = {ex.submit(worker, p): p for p in ord_ports}
 
             for f in as_completed(f_map):
                 try:

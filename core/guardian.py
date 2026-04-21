@@ -49,6 +49,7 @@ def has_dbg():
         try:
             import ctypes, ctypes.util
             c = ctypes.CDLL(ctypes.util.find_library("c"))
+            c.ptrace.argtypes = [ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_int]
             c.ptrace(31, 0, 0, 0)
         except:
             pass
